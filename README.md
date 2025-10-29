@@ -1,7 +1,4 @@
 <p align="center">
-  <img src="https://imgur.com/VQIB0A9.png" alt="Merge-X" width="400" />
-</p>
-<p align="center">
   <b>Merge-X</b>
   <br/>
   <i>Batch-transfer selected ERC-20 tokens from one EVM wallet to another with ENS support.</i>
