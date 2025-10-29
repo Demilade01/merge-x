@@ -1,7 +1,7 @@
 {
-  "name": "@create-web3/frontend",
+  "name": "merge-x",
   "version": "0.1.0",
-  "description": "",
+  "description": "Merge-X: Batch-transfer selected ERC-20 tokens from one EVM wallet to another with ENS support.",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -32,7 +32,7 @@ const { chains, publicClient } = configureChains(
 );
 
 const { connectors } = getDefaultWallets({
-  appName: 'Drain',
+  appName: 'Merge-X',
   projectId: walletConnectProjectId,
   chains,
 });
@@ -50,18 +50,18 @@ const App = ({ Component, pageProps }: AppProps) => {
   return (
     <>
       <GithubCorner
-        href="https://github.com/dawsbot/drain"
+        href="https://github.com/your-org/merge-x"
         size="140"
-        bannerColor="#e056fd"
+        bannerColor="#0ea5e9"
       />
 
       <WagmiConfig config={wagmiConfig}>
         <RainbowKitProvider coolMode chains={chains}>
           <NextHead>
-            <title>Drain</title>
+            <title>Merge-X</title>
             <meta
               name="description"
-              content="Send all tokens from one wallet to another"
+              content="Batch-transfer selected ERC-20 tokens from one EVM wallet to another with ENS support."
             />
             <link rel="icon" href="/favicon.ico" />
           </NextHead>
