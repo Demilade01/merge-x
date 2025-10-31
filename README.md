@@ -7,9 +7,11 @@
 <br/>
 
 ### Overview
+
 Merge-X is a minimal, production-ready Next.js dApp that helps you quickly migrate funds between wallets. Connect a wallet, fetch token balances on supported chains, select which tokens to move, and send them in a streamlined flow. ENS names are supported for the destination address.
 
 ### Features
+
 - **Wallet connect**: RainbowKit + Wagmi with multiple popular wallets.
 - **Multi-chain**: Ethereum Mainnet, Polygon, Optimism, Arbitrum, BSC, Gnosis.
 - **Token fetching**: Serverless API proxy to Covalent with filtering and blacklist.
@@ -18,27 +20,32 @@ Merge-X is a minimal, production-ready Next.js dApp that helps you quickly migra
 - **Clean state**: Jotai atoms for selections, tokens list, and destination.
 
 ### Tech Stack
+
 - **Frontend**: Next.js 14, React 18, TypeScript
 - **Web3**: Wagmi, Viem, RainbowKit
 - **UI**: Geist UI
 - **Validation**: Zod
 
 ### Requirements
+
 - Node.js 18+
-- Env vars:
-  - `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` (WalletConnect project ID)
-  - `COVALENT_API_KEY` (server-side, used in the API route)
+- API keys (sign up for free):
+  - **WalletConnect Project ID**: Sign up at [walletconnect.com/cloud](https://cloud.walletconnect.com/)
+  - **Covalent API Key**: Sign up at [covalenthq.com/platform](https://www.covalenthq.com/platform/#/auth/register)
 
 ### Getting Started
+
 1. Install dependencies:
    ```bash
    npm install
    ```
-2. Create a `.env.local` at the project root:
+2. Create a `.env.local` at the project root (a template file has been created for you):
    ```bash
-   NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=YOUR_PROJECT_ID
-   COVALENT_API_KEY=YOUR_COVALENT_KEY
+   # .env.local
+   NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your-walletconnect-project-id
+   COVALENT_API_KEY=your-covalent-api-key
    ```
+   **Note**: Replace the placeholder values with your actual API keys from the services above.
 3. Run the dev server:
    ```bash
    npm run dev
@@ -46,6 +53,7 @@ Merge-X is a minimal, production-ready Next.js dApp that helps you quickly migra
 4. Open `http://localhost:3000` and connect your wallet.
 
 ### How It Works
+
 - The client calls `GET /api/chain-info/[chainId]/[evmAddress]` to fetch balances.
 - The API handler translates the `chainId` to a Covalent `chainName` and queries Covalent.
 - Results are filtered to legitimate ERC-20s and exclude any `blacklistAddresses` defined in `src/token-lists.ts`.
@@ -54,6 +62,7 @@ Merge-X is a minimal, production-ready Next.js dApp that helps you quickly migra
 - If the destination is an ENS name, it resolves to an address before sending.
 
 Key files:
+
 - `pages/_app.tsx`: Wagmi/RainbowKit setup and global app shell
 - `pages/index.tsx`: Renders `GetTokens` + `SendTokens`
 - `components/contract/GetTokens.tsx`: Fetches and displays balances with toggles
@@ -63,6 +72,7 @@ Key files:
 - `src/atoms/*`: Jotai global state atoms
 
 ### Scripts
+
 - `npm run dev` — Start development server
 - `npm run build` — Build for production
 - `npm run start` — Start production build
@@ -70,15 +80,18 @@ Key files:
 - `npm run export` — Static export (where applicable)
 
 ### Security Notes
+
 - Always verify the destination address/ENS name before sending.
 - The app does not custody keys; transactions are signed in your wallet.
 - The filtering is best-effort; review selected tokens before confirming.
 
 ### Roadmap Ideas
+
 - Native token (ETH/MATIC/etc.) sweep support with safety checks
 - Gas and fee previews per token
 - Retry/queue and partial failures handling UI
 - CSV export of balances
 
 ### License
+
 MIT
