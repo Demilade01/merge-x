@@ -22,9 +22,8 @@ import { arbitrum, bsc, gnosis, optimism, polygon } from 'viem/chains';
 import { z } from 'zod';
 import { useIsMounted } from '../hooks';
 
-const walletConnectProjectId = z
-  .string()
-  .parse(process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID);
+const walletConnectProjectId =
+  process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'demo-project-id';
 
 const { chains, publicClient } = configureChains(
   [mainnet, polygon, optimism, arbitrum, bsc, gnosis],
@@ -38,7 +37,7 @@ const { connectors } = getDefaultWallets({
 });
 
 const wagmiConfig = createConfig({
-  autoConnect: true,
+  autoConnect: false,
   connectors,
   publicClient,
 });
@@ -50,7 +49,7 @@ const App = ({ Component, pageProps }: AppProps) => {
   return (
     <>
       <GithubCorner
-        href="https://github.com/your-org/merge-x"
+        href="https://github.com/demilade01/merge-x"
         size="140"
         bannerColor="#0ea5e9"
       />
