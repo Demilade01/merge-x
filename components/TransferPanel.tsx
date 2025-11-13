@@ -98,7 +98,7 @@ export const TransferPanel = () => {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-6 space-y-6"
+        className="glass-card p-6 space-y-6 overflow-hidden"
       >
         <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
           Transfer
@@ -107,15 +107,15 @@ export const TransferPanel = () => {
         {/* Destination Input */}
         <div className="space-y-2">
           <label className="text-sm text-white/70">Destination Address</label>
-          <div className="relative">
+          <div className="relative w-full">
             <input
               type="text"
               value={destinationAddress || ''}
               onChange={(e) => setDestinationAddress(e.target.value)}
               placeholder="vitalik.eth or 0x..."
               className={`
-                w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl
-                px-4 py-3 text-white placeholder-white/40
+                w-full max-w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl
+                px-4 py-3 text-white placeholder-white/40 box-border
                 focus:outline-none focus:ring-2 focus:bg-white/10 focus:border-white/20 transition-all
                 ${
                   addressAppearsValid
