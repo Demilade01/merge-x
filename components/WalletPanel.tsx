@@ -41,13 +41,15 @@ export const WalletPanel = () => {
         className="glass-card p-6"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Wallet</h2>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Wallet
+          </h2>
           <ConnectButton showBalance={false} />
         </div>
         {isConnected && address && (
           <div className="space-y-3">
             <div>
-              <p className="text-sm text-white/60 mb-1">Address</p>
+              <p className="text-sm font-medium text-white/80 mb-1">Address</p>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center">
                   <span className="text-xs">👤</span>
@@ -56,7 +58,7 @@ export const WalletPanel = () => {
                   {ensName ? (
                     <p className="font-medium truncate">{ensName}</p>
                   ) : (
-                    <p className="font-mono text-sm truncate">
+                    <p className="font-mono text-sm font-medium text-white truncate">
                       {formatAddress(address)}
                     </p>
                   )}
@@ -124,7 +126,7 @@ export const WalletPanel = () => {
           transition={{ delay: 0.1 }}
           className="glass-card p-4"
         >
-          <h3 className="text-sm font-medium mb-3 text-white/80">Network</h3>
+          <h3 className="text-sm font-semibold mb-3 text-white/90">Network</h3>
           <div className="grid grid-cols-3 gap-2">
             {chains.map((chainOption) => {
               const isActive = chain?.id === chainOption.id;
@@ -133,11 +135,11 @@ export const WalletPanel = () => {
                   key={chainOption.id}
                   onClick={() => switchNetwork?.(chainOption.id)}
                   className={`
-                    px-3 py-2 rounded-xl text-xs font-medium transition-all
+                    px-3 py-2 rounded-xl text-xs font-semibold transition-all text-white
                     ${
                       isActive
                         ? 'bg-white/10 border border-white/20 shadow-lg shadow-white/5'
-                        : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                        : 'bg-white/5 border border-white/10 hover:bg-white/10 text-white/90'
                     }
                   `}
                   whileHover={{ scale: 1.05 }}

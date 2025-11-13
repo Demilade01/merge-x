@@ -100,7 +100,9 @@ export const TransferPanel = () => {
         animate={{ opacity: 1, y: 0 }}
         className="glass-card p-6 space-y-6"
       >
-        <h2 className="text-xl font-semibold">Transfer</h2>
+        <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          Transfer
+        </h2>
 
         {/* Destination Input */}
         <div className="space-y-2">
@@ -112,8 +114,9 @@ export const TransferPanel = () => {
               onChange={(e) => setDestinationAddress(e.target.value)}
               placeholder="vitalik.eth or 0x..."
               className={`
-                w-full glass-input px-4 py-3 text-white placeholder-white/40
-                focus:outline-none focus:ring-2 transition-all
+                w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl
+                px-4 py-3 text-white placeholder-white/40
+                focus:outline-none focus:ring-2 focus:bg-white/10 focus:border-white/20 transition-all
                 ${
                   addressAppearsValid
                     ? 'focus:ring-green-500/50'
