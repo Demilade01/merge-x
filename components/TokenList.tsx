@@ -6,6 +6,7 @@ import { useAtom } from 'jotai';
 import { checkedTokensAtom } from '../src/atoms/checked-tokens-atom';
 import { globalTokensAtom } from '../src/atoms/global-tokens-atom';
 import { httpFetchTokens, Tokens } from '../src/fetch-tokens';
+import { PortfolioStats } from './PortfolioStats';
 
 const usdFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -21,6 +22,7 @@ const TokenRow = ({ token }: { token: Tokens[number] }) => {
   const pendingTxn = checkedRecords[tokenAddress]?.pendingTxn;
   const isChecked = checkedRecords[tokenAddress]?.isChecked || false;
   const { address } = useAccount();
+  const [logoError, setLogoError] = useState(false);
 
   const unroundedBalance = tinyBig(token.quote).div(token.quote_rate);
   const roundedBalance = unroundedBalance.lt(0.001)
@@ -44,7 +46,14 @@ const TokenRow = ({ token }: { token: Tokens[number] }) => {
     }));
   };
 
-  const tokenLogoUrl = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${chain?.name.toLowerCase()}/assets/${token.contract_address}/logo.png`;
+  // Better token logo URL with fallback
+  const getTokenLogoUrl = () => {
+    const chainName = chain?.name.toLowerCase() || 'ethereum';
+    // Try Trust Wallet assets first
+    return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${chainName}/assets/${token.contract_address}/logo.png`;
+  };
+
+  const tokenLogoUrl = getTokenLogoUrl();
 
   return (
     <motion.div
@@ -98,17 +107,20 @@ const TokenRow = ({ token }: { token: Tokens[number] }) => {
         </div>
 
         {/* Token Logo */}
-        <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
-          <img
-            src={tokenLogoUrl}
-            alt={token.contract_ticker_symbol}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-              (e.target as HTMLImageElement).parentElement!.innerHTML =
-                '<span class="text-xs">💰</span>';
-            }}
-          />
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-white/10 flex items-center justify-center overflow-hidden relative">
+          {!logoError && (
+            <img
+              src={token.logo_url || tokenLogoUrl}
+              alt={token.contract_ticker_symbol}
+              className="w-full h-full object-cover"
+              onError={() => setLogoError(true)}
+            />
+          )}
+          {logoError && (
+            <span className="text-sm font-semibold text-white/80">
+              {token.contract_ticker_symbol.charAt(0).toUpperCase()}
+            </span>
+          )}
         </div>
 
         {/* Token Info */}
@@ -229,6 +241,9 @@ export const TokenList = () => {
 
   return (
     <div className="space-y-4">
+      {/* Portfolio Stats */}
+      <PortfolioStats />
+
       {/* Search and Filters */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
