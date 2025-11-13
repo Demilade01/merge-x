@@ -8,7 +8,7 @@ module.exports = {
     extend: {
       colors: {
         dark: {
-          base: '#070825',
+          base: '#18181b',
           card: 'rgba(255, 255, 255, 0.05)',
           border: 'rgba(255, 255, 255, 0.1)',
         },
