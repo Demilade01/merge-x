@@ -55,7 +55,12 @@ const App = ({ Component, pageProps }: AppProps) => {
       />
 
       <WagmiConfig config={wagmiConfig}>
-        <RainbowKitProvider coolMode chains={chains}>
+        <RainbowKitProvider
+          coolMode
+          chains={chains}
+          modalSize="compact"
+          initialChain={mainnet}
+        >
           <NextHead>
             <title>Merge-X</title>
             <meta

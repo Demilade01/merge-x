@@ -19,7 +19,7 @@
       Droid Sans,
       Helvetica Neue,
       sans-serif;
-    background: #070825;
+    background: #18181b;
     color: white;
     min-height: 100vh;
   }
@@ -50,4 +50,34 @@
   .glass-input {
     @apply glass-card bg-white/5 focus:bg-white/10 focus:border-white/20 transition-all duration-200;
   }
+}
+
+/* RainbowKit Dark Mode Overrides */
+[data-rk] {
+  --rk-radii-connectButton: 0.75rem;
+  --rk-radii-actionButton: 0.75rem;
+}
+
+[data-rk] button {
+  border-radius: 0.75rem;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
