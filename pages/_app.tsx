@@ -48,12 +48,6 @@ const App = ({ Component, pageProps }: AppProps) => {
   if (!isMounted) return null;
   return (
     <>
-      <GithubCorner
-        href="https://github.com/demilade01/merge-x"
-        size="140"
-        bannerColor="#0ea5e9"
-      />
-
       <WagmiConfig config={wagmiConfig}>
         <RainbowKitProvider
           coolMode
