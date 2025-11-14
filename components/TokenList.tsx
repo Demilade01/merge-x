@@ -48,7 +48,20 @@ const TokenRow = ({ token }: { token: Tokens[number] }) => {
 
   // Better token logo URL with fallback
   const getTokenLogoUrl = () => {
-    const chainName = chain?.name.toLowerCase() || 'ethereum';
+    // Map chain names to Trust Wallet asset paths
+    const chainNameMap: Record<number, string> = {
+      1: 'ethereum',
+      10: 'optimism',
+      56: 'smartchain', // BSC
+      100: 'xdai', // Gnosis
+      137: 'polygon',
+      250: 'fantom',
+      42161: 'arbitrum',
+      43114: 'avalanchec', // Avalanche C-Chain
+      8453: 'base', // Base
+    };
+    const chainName =
+      chainNameMap[chain?.id || 1] || chain?.name.toLowerCase() || 'ethereum';
     // Try Trust Wallet assets first
     return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${chainName}/assets/${token.contract_address}/logo.png`;
   };
@@ -180,13 +193,23 @@ export const TokenList = () => {
     setLoading(true);
     try {
       setError('');
-      const newTokens = await httpFetchTokens(chain.id, address);
-      setTokens((newTokens as any).data.erc20s);
-    } catch (error) {
-      setError(`Chain ${chain?.id} not supported. Coming soon!`);
+      const response = await httpFetchTokens(chain.id, address);
+      if (response.success && response.data?.erc20s) {
+        setTokens(response.data.erc20s);
+      } else {
+        setError(`No tokens found on ${chain?.name || 'this network'}`);
+        setTokens([]);
+      }
+    } catch (error: any) {
+      console.error('Error fetching tokens:', error);
+      setError(
+        error?.message ||
+          `Failed to fetch tokens for ${chain?.name || 'this network'}. Please try again.`,
+      );
+      setTokens([]);
     }
     setLoading(false);
-  }, [address, chain?.id, setTokens]);
+  }, [address, chain?.id, chain?.name, setTokens]);
 
   useEffect(() => {
     if (address && chain?.id) {
@@ -318,9 +341,17 @@ export const TokenList = () => {
       )}
 
       {/* Error State */}
-      {error && (
+      {error && !loading && (
         <div className="glass-card p-6 text-center">
-          <p className="text-red-400">{error}</p>
+          <p className="text-red-400 mb-3">{error}</p>
+          {chain?.id && (
+            <button
+              onClick={fetchData}
+              className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-sm"
+            >
+              Retry
+            </button>
+          )}
         </div>
       )}
 
