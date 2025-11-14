@@ -9,12 +9,16 @@ import {
   initWeb3Wallet,
   walletConnectUtils,
 } from '../src/utils/walletconnect';
-import type { EthereumProvider } from '@walletconnect/ethereum-provider';
-import type { Web3Wallet } from '@walletconnect/web3wallet';
+import { EthereumProvider } from '@walletconnect/ethereum-provider';
+import { Web3Wallet } from '@walletconnect/web3wallet';
+
+// Use InstanceType to get the instance type from the class
+type EthereumProviderInstance = InstanceType<typeof EthereumProvider>;
+type Web3WalletInstance = InstanceType<typeof Web3Wallet>;
 
 interface UseWalletConnectReturn {
-  ethereumProvider: EthereumProvider | null;
-  web3Wallet: Web3Wallet | null;
+  ethereumProvider: EthereumProviderInstance | null;
+  web3Wallet: Web3WalletInstance | null;
   isInitializing: boolean;
   error: string | null;
   connect: () => Promise<void>;
@@ -24,8 +28,8 @@ interface UseWalletConnectReturn {
 
 export const useWalletConnect = (): UseWalletConnectReturn => {
   const [ethereumProvider, setEthereumProvider] =
-    useState<EthereumProvider | null>(null);
-  const [web3Wallet, setWeb3Wallet] = useState<Web3Wallet | null>(null);
+    useState<EthereumProviderInstance | null>(null);
+  const [web3Wallet, setWeb3Wallet] = useState<Web3WalletInstance | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,7 +81,11 @@ export const useWalletConnect = (): UseWalletConnectReturn => {
         setEthereumProvider(null);
       }
       if (web3Wallet) {
-        await web3Wallet.core.pairing.disconnect();
+        // Get active pairings and disconnect them
+        const pairings = web3Wallet.core.pairing.getPairings();
+        for (const pairing of pairings) {
+          await web3Wallet.core.pairing.disconnect({ topic: pairing.topic });
+        }
         setWeb3Wallet(null);
       }
     } catch (err: any) {

@@ -6,7 +6,6 @@
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
 import { Web3Wallet } from '@walletconnect/web3wallet';
 import { Core } from '@walletconnect/core';
-import { Utils } from '@walletconnect/utils';
 
 // Get WalletConnect Project ID from environment
 const walletConnectProjectId =
@@ -64,8 +63,9 @@ export const initWeb3Wallet = async () => {
     const core = initWalletConnectCore();
     if (!core) return null;
 
+    // Use type assertion to handle version mismatch between packages
     const web3wallet = await Web3Wallet.init({
-      core,
+      core: core as any,
       metadata: {
         name: 'Merge-X',
         description:
@@ -119,7 +119,5 @@ export const walletConnectUtils = {
   },
 };
 
-/**
- * Export WalletConnect utilities
- */
-export { Utils as WalletConnectUtils };
+// Note: @walletconnect/utils doesn't export a Utils class
+// Use the walletConnectUtils object above for utility functions
