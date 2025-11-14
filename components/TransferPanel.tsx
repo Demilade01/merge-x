@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useAccount, usePublicClient, useWalletClient } from 'wagmi';
+import {
+  useAccount,
+  useNetwork,
+  usePublicClient,
+  useWalletClient,
+} from 'wagmi';
 import { erc20ABI } from 'wagmi';
 import { motion } from 'framer-motion';
 import { isAddress } from 'essential-eth';
@@ -28,8 +33,21 @@ export const TransferPanel = () => {
   const [tokens] = useAtom(globalTokensAtom);
   const [checkedRecords] = useAtom(checkedTokensAtom);
   const { address } = useAccount();
+  const { chain } = useNetwork();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
+
+  // ENS is only supported on Ethereum mainnet (chainId 1)
+  const supportsENS = chain?.id === 1;
+
+  // Clear ENS addresses when switching to non-ENS networks
+  useEffect(() => {
+    if (!supportsENS && destinationAddress?.includes('.')) {
+      setDestinationAddress('');
+      setResolvedAddress(null);
+      setEnsName(null);
+    }
+  }, [supportsENS, destinationAddress, setDestinationAddress]);
 
   const tokensToSend = Object.entries(checkedRecords)
     .filter(([_, { isChecked }]) => isChecked)
@@ -43,12 +61,18 @@ export const TransferPanel = () => {
     0,
   );
 
-  // Resolve ENS name
+  // Resolve ENS name (only on Ethereum mainnet)
   useEffect(() => {
     const resolveENS = async () => {
       if (!destinationAddress || !publicClient) return;
 
       if (destinationAddress.includes('.')) {
+        // ENS names only work on Ethereum mainnet
+        if (!supportsENS) {
+          setResolvedAddress(null);
+          setEnsName(null);
+          return;
+        }
         setIsResolving(true);
         try {
           const resolved = await publicClient.getEnsAddress({
@@ -69,13 +93,17 @@ export const TransferPanel = () => {
         }
       } else if (isAddress(destinationAddress)) {
         setResolvedAddress(destinationAddress);
-        // Try to get ENS name
-        try {
-          const name = await publicClient.getEnsName({
-            address: destinationAddress as `0x${string}`,
-          });
-          setEnsName(name || null);
-        } catch {
+        // Try to get ENS name (only on Ethereum mainnet)
+        if (supportsENS) {
+          try {
+            const name = await publicClient.getEnsName({
+              address: destinationAddress as `0x${string}`,
+            });
+            setEnsName(name || null);
+          } catch {
+            setEnsName(null);
+          }
+        } else {
           setEnsName(null);
         }
       } else {
@@ -85,11 +113,13 @@ export const TransferPanel = () => {
     };
 
     resolveENS();
-  }, [destinationAddress, publicClient]);
+  }, [destinationAddress, publicClient, supportsENS]);
 
   const addressAppearsValid =
     typeof destinationAddress === 'string' &&
-    (destinationAddress.includes('.') || isAddress(destinationAddress));
+    (supportsENS
+      ? destinationAddress.includes('.') || isAddress(destinationAddress)
+      : isAddress(destinationAddress));
 
   const checkedCount = tokensToSend.length;
 
@@ -112,7 +142,11 @@ export const TransferPanel = () => {
               type="text"
               value={destinationAddress || ''}
               onChange={(e) => setDestinationAddress(e.target.value)}
-              placeholder="vitalik.eth or 0x..."
+              placeholder={
+                supportsENS
+                  ? 'vitalik.eth or 0x...'
+                  : '0x... (ENS not supported on this network)'
+              }
               className={`
                 w-full max-w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl
                 px-4 py-3 text-white placeholder-white/40 box-border

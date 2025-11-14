@@ -1,23 +1,77 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useEnsName, useNetwork, useSwitchNetwork } from 'wagmi';
 import { motion } from 'framer-motion';
-import { mainnet, polygon, optimism, arbitrum, bsc, gnosis } from 'viem/chains';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import {
+  mainnet,
+  polygon,
+  optimism,
+  arbitrum,
+  base,
+  avalanche,
+  bsc,
+  fantom,
+  gnosis,
+} from 'viem/chains';
 
 const chains = [
   { id: mainnet.id, name: 'Ethereum', shortName: 'ETH' },
   { id: polygon.id, name: 'Polygon', shortName: 'MATIC' },
   { id: optimism.id, name: 'Optimism', shortName: 'OP' },
   { id: arbitrum.id, name: 'Arbitrum', shortName: 'ARB' },
+  { id: base.id, name: 'Base', shortName: 'BASE' },
   { id: bsc.id, name: 'BSC', shortName: 'BNB' },
   { id: gnosis.id, name: 'Gnosis', shortName: 'GNO' },
+  { id: avalanche.id, name: 'Avalanche', shortName: 'AVAX' },
+  { id: fantom.id, name: 'Fantom', shortName: 'FTM' },
 ];
 
 export const WalletPanel = () => {
   const { address, isConnected } = useAccount();
   const { chain } = useNetwork();
   const { switchNetwork } = useSwitchNetwork();
-  const { data: ensName } = useEnsName({ address });
+  // ENS is only supported on Ethereum mainnet (chainId 1)
+  const supportsENS = chain?.id === 1;
+  const [ensName, setEnsName] = useState<string | null>(null);
+
+  // Only fetch ENS name on Ethereum mainnet - with strict guards and error handling
+  // Completely disable the hook when not on Ethereum mainnet
+  const isEthereumMainnet = chain?.id === 1;
+  const shouldFetchENS = isEthereumMainnet && !!address && !!chain;
+
+  const { data: fetchedEnsName, error: ensError } = useEnsName({
+    address: shouldFetchENS ? address : undefined,
+    enabled: shouldFetchENS,
+    onError: (error) => {
+      // Silently handle ENS errors - don't let them break the UI
+      setEnsName(null);
+      // Only log if we're actually on Ethereum (unexpected error)
+      if (isEthereumMainnet) {
+        console.debug('ENS resolution error:', error);
+      }
+    },
+  });
+
+  // Immediately clear ENS when switching away from Ethereum
+  useEffect(() => {
+    if (chain?.id !== 1) {
+      setEnsName(null);
+    }
+  }, [chain?.id]);
+
+  // Update local state only when ENS is supported
+  useEffect(() => {
+    // Don't update if not on Ethereum
+    if (!supportsENS || chain?.id !== 1) {
+      return;
+    }
+
+    if (fetchedEnsName && !ensError) {
+      setEnsName(fetchedEnsName);
+    } else {
+      setEnsName(null);
+    }
+  }, [supportsENS, fetchedEnsName, ensError, chain?.id]);
 
   const [copied, setCopied] = useState(false);
 

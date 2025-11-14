@@ -9,7 +9,10 @@ type ChainName =
   | 'optimism-mainnet'
   | 'arbitrum-mainnet'
   | 'bsc-mainnet'
-  | 'gnosis-mainnet';
+  | 'gnosis-mainnet'
+  | 'base-mainnet'
+  | 'avalanche-mainnet'
+  | 'fantom-mainnet';
 function selectChainName(chainId: number): ChainName {
   switch (chainId) {
     case 1:
@@ -24,9 +27,14 @@ function selectChainName(chainId: number): ChainName {
       return 'matic-mainnet';
     case 42161:
       return 'arbitrum-mainnet';
+    case 8453:
+      return 'base-mainnet';
+    case 43114:
+      return 'avalanche-mainnet';
+    case 250:
+      return 'fantom-mainnet';
     default:
       const errorMessage = `chainId "${chainId}" not supported`;
-      alert(errorMessage);
       throw new Error(errorMessage);
   }
 }
@@ -55,12 +63,19 @@ const fetchTokens = async (chainId: number, evmAddress: string) => {
             item.quote_rate,
             item.quote_rate_24h,
           ].includes(null);
-          return item.balance !== '0' && hasQuotes && item.quote > 1;
+          const balanceStr = String(item.balance);
+          return balanceStr !== '0' && hasQuotes && item.quote > 1;
+        })
+        .filter((item) => {
+          // Ensure it's a pure ERC-20 token (not ERC-721/ERC-1155)
+          return (
+            item.supports_erc &&
+            item.supports_erc.includes('erc20') &&
+            item.supports_erc.length === 1
+          );
         }) as Tokens;
 
-      const nfts = allRelevantItems.filter(
-        (item) => item.type === 'nft',
-      ) as Tokens;
+      const nfts = allRelevantItems.filter((item) => item.type === 'nft');
       return { erc20s, nfts };
     });
 };
