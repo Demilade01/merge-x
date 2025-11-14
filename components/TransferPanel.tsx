@@ -9,6 +9,7 @@ import { erc20ABI } from 'wagmi';
 import { motion } from 'framer-motion';
 import { isAddress } from 'essential-eth';
 import { useAtom } from 'jotai';
+import { formatEther, encodeFunctionData } from 'viem';
 import { normalize } from 'viem/ens';
 import { checkedTokensAtom } from '../src/atoms/checked-tokens-atom';
 import { destinationAddressAtom } from '../src/atoms/destination-address-atom';
@@ -30,6 +31,14 @@ export const TransferPanel = () => {
   const [ensName, setEnsName] = useState<string | null>(null);
   const [isResolving, setIsResolving] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [gasEstimate, setGasEstimate] = useState<{
+    totalGas: bigint;
+    totalCostNative: string;
+    totalCostUSD: number;
+    gasPrice: bigint;
+    isLoading: boolean;
+    error: string | null;
+  } | null>(null);
   const [tokens] = useAtom(globalTokensAtom);
   const [checkedRecords] = useAtom(checkedTokensAtom);
   const { address } = useAccount();
@@ -60,6 +69,103 @@ export const TransferPanel = () => {
     (sum, { token }) => sum + (token?.quote || 0),
     0,
   );
+
+  // Estimate gas costs for all transfers
+  useEffect(() => {
+    const estimateGas = async () => {
+      if (
+        !publicClient ||
+        !walletClient ||
+        !resolvedAddress ||
+        tokensToSend.length === 0
+      ) {
+        setGasEstimate(null);
+        return;
+      }
+
+      setGasEstimate(
+        (prev) =>
+          ({
+            ...prev,
+            isLoading: true,
+            error: null,
+          }) as any,
+      );
+
+      try {
+        // Get gas price
+        const gasPrice = await publicClient.getGasPrice();
+
+        // Estimate gas for each token transfer
+        let totalGas = BigInt(0);
+        const gasEstimates: bigint[] = [];
+
+        for (const { address: tokenAddress, token } of tokensToSend) {
+          try {
+            const gas = await publicClient.estimateGas({
+              account: walletClient.account,
+              to: tokenAddress,
+              data: encodeFunctionData({
+                abi: erc20ABI,
+                functionName: 'transfer',
+                args: [
+                  resolvedAddress as `0x${string}`,
+                  BigInt(token?.balance || '0'),
+                ],
+              }),
+            });
+            gasEstimates.push(gas);
+            totalGas += gas;
+          } catch (error) {
+            // If estimation fails, use a default value (65,000 is typical for ERC-20 transfers)
+            const defaultGas = BigInt(65000);
+            gasEstimates.push(defaultGas);
+            totalGas += defaultGas;
+          }
+        }
+
+        // Calculate total cost in native token
+        // 10^18 = 1000000000000000000
+        const divisor = BigInt('1000000000000000000');
+        const totalCostNative = (totalGas * gasPrice) / divisor;
+        const totalCostNativeFormatted = formatEther(totalCostNative);
+
+        // Estimate USD value (rough approximation: use a default price or fetch from API)
+        // For now, we'll use a simple multiplier based on chain
+        // You could enhance this by fetching native token price from an API
+        const nativeTokenPriceUSD =
+          chain?.id === 1
+            ? 2000
+            : chain?.id === 137
+              ? 0.7
+              : chain?.id === 8453
+                ? 0.0003
+                : 0.5; // Rough estimates
+        const totalCostUSD =
+          Number(totalCostNativeFormatted) * nativeTokenPriceUSD;
+
+        setGasEstimate({
+          totalGas,
+          totalCostNative: totalCostNativeFormatted,
+          totalCostUSD,
+          gasPrice,
+          isLoading: false,
+          error: null,
+        });
+      } catch (error: any) {
+        setGasEstimate({
+          totalGas: BigInt(0),
+          totalCostNative: '0',
+          totalCostUSD: 0,
+          gasPrice: BigInt(0),
+          isLoading: false,
+          error: error?.message || 'Failed to estimate gas',
+        });
+      }
+    };
+
+    estimateGas();
+  }, [publicClient, walletClient, resolvedAddress, tokensToSend, chain?.id]);
 
   // Resolve ENS name (only on Ethereum mainnet)
   useEffect(() => {
@@ -208,6 +314,52 @@ export const TransferPanel = () => {
                 {usdFormatter.format(totalValue)}
               </span>
             </div>
+
+            {/* Gas Estimate */}
+            {gasEstimate && (
+              <div className="space-y-2 pt-2 border-t border-white/5">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-white/60">Estimated Gas</span>
+                  {gasEstimate.isLoading ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : gasEstimate.error ? (
+                    <span className="text-red-400 text-xs">
+                      Estimation failed
+                    </span>
+                  ) : (
+                    <div className="text-right">
+                      <div className="font-semibold text-white">
+                        {parseFloat(gasEstimate.totalCostNative) < 0.0001
+                          ? '< 0.0001'
+                          : parseFloat(gasEstimate.totalCostNative).toFixed(
+                              6,
+                            )}{' '}
+                        {chain?.nativeCurrency?.symbol || 'ETH'}
+                      </div>
+                      <div className="text-xs text-white/50">
+                        ~{usdFormatter.format(gasEstimate.totalCostUSD)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {gasEstimate &&
+                  !gasEstimate.isLoading &&
+                  !gasEstimate.error &&
+                  gasEstimate.totalCostUSD > totalValue * 0.1 && (
+                    <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                      <p className="text-xs text-yellow-400">
+                        ⚠️ Gas cost (
+                        {usdFormatter.format(gasEstimate.totalCostUSD)}) is{' '}
+                        {(
+                          (gasEstimate.totalCostUSD / totalValue) *
+                          100
+                        ).toFixed(1)}
+                        % of total value
+                      </p>
+                    </div>
+                  )}
+              </div>
+            )}
           </motion.div>
         )}
 
