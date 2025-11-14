@@ -20,6 +20,8 @@ interface UseWalletConnectReturn {
   ethereumProvider: EthereumProviderInstance | null;
   web3Wallet: Web3WalletInstance | null;
   isInitializing: boolean;
+  isConnected: boolean;
+  address: string | null;
   error: string | null;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
@@ -31,7 +33,46 @@ export const useWalletConnect = (): UseWalletConnectReturn => {
     useState<EthereumProviderInstance | null>(null);
   const [web3Wallet, setWeb3Wallet] = useState<Web3WalletInstance | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [address, setAddress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Track connected address from provider
+  useEffect(() => {
+    if (!ethereumProvider) {
+      setAddress(null);
+      return;
+    }
+
+    const updateAddress = async () => {
+      try {
+        const accounts = ethereumProvider.accounts;
+        if (accounts && accounts.length > 0) {
+          setAddress(accounts[0]);
+        } else {
+          setAddress(null);
+        }
+      } catch (err) {
+        setAddress(null);
+      }
+    };
+
+    updateAddress();
+
+    // Listen for account changes
+    ethereumProvider.on('accountsChanged', updateAddress);
+    ethereumProvider.on('disconnect', () => {
+      setAddress(null);
+      setEthereumProvider(null);
+    });
+
+    return () => {
+      ethereumProvider.removeListener('accountsChanged', updateAddress);
+      ethereumProvider.removeListener('disconnect', () => {
+        setAddress(null);
+        setEthereumProvider(null);
+      });
+    };
+  }, [ethereumProvider]);
 
   // Initialize providers
   useEffect(() => {
@@ -63,14 +104,28 @@ export const useWalletConnect = (): UseWalletConnectReturn => {
   const connect = useCallback(async () => {
     try {
       setError(null);
+      setIsInitializing(true);
+
       const provider = await initEthereumProvider();
+
       if (provider) {
         await provider.enable();
         setEthereumProvider(provider);
+        const accounts = provider.accounts;
+        if (accounts && accounts.length > 0) {
+          setAddress(accounts[0]);
+        }
+      } else {
+        const errorMsg =
+          'WebSocket connection to WalletConnect relay servers failed. This is usually a network/firewall issue. Try: different network, disable VPN, or check firewall settings. Note: RainbowKit WalletConnect should still work.';
+        setError(errorMsg);
       }
     } catch (err: any) {
-      setError(err?.message || 'Failed to connect');
+      const errorMessage = err?.message || 'Failed to connect';
+      setError(errorMessage);
       throw err;
+    } finally {
+      setIsInitializing(false);
     }
   }, []);
 
@@ -79,6 +134,7 @@ export const useWalletConnect = (): UseWalletConnectReturn => {
       if (ethereumProvider) {
         await ethereumProvider.disconnect();
         setEthereumProvider(null);
+        setAddress(null);
       }
       if (web3Wallet) {
         // Get active pairings and disconnect them
@@ -97,6 +153,8 @@ export const useWalletConnect = (): UseWalletConnectReturn => {
     ethereumProvider,
     web3Wallet,
     isInitializing,
+    isConnected: !!address && !!ethereumProvider,
+    address,
     error,
     connect,
     disconnect,
