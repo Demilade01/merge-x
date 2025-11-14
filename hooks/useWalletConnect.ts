@@ -122,6 +122,18 @@ export const useWalletConnect = (): UseWalletConnectReturn => {
       }
     } catch (err: any) {
       const errorMessage = err?.message || 'Failed to connect';
+
+      // Ignore deep link errors - they're expected if no wallet app is installed
+      // The QR code modal should still be visible for scanning
+      if (
+        errorMessage.includes('scheme') &&
+        errorMessage.includes('registered handler')
+      ) {
+        // This is normal - user should scan QR code with mobile wallet
+        setError(null);
+        return;
+      }
+
       setError(errorMessage);
       throw err;
     } finally {
