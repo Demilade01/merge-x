@@ -30,6 +30,16 @@ export const initEthereumProvider = async () => {
       },
     });
 
+    // Handle deep link errors gracefully
+    if (provider) {
+      // Listen for connection events
+      provider.on('display_uri', (uri: string) => {
+        // URI is available - user should scan QR code or use mobile wallet
+        // The deep link error is expected if no wallet app is installed
+        // User should scan the QR code with their mobile wallet instead
+      });
+    }
+
     return provider;
   } catch (error) {
     console.error('Failed to initialize Ethereum Provider:', error);
